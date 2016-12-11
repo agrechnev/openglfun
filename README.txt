@@ -2,7 +2,7 @@ My fun with OpenGL (+GLFW+GLEW) by Oleksiy Grechnyev
 
 I mainly follow learnopengl.com
 
-hello is taken from the cite as is,
+hello is taken from the site as is,
 
 but mygl<number> I wrote by hand, in pure C (no C++), with many changes
 

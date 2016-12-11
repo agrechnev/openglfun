@@ -3,14 +3,14 @@ CFLAGS=
 
 #LIBS= -lGLEW -lglfw  -lGL -lX11 -pthread -lXrandr -lXi
 LIBS= -lGLEW -lglfw  -lGL
-OBJS = mygl1.o initwin.o shaders.o vao.o
+OBJS = mygl2.o initwin.o shaders.o vao.o
 DEPS=initwin.h shaders.h vao.h
 
-mygl1: $(OBJS)
+mygl2: $(OBJS)
 	$(CC) -Wall  -o $@  $(OBJS) $(LIBS)
 
 .o:.c $(DEPS)
 	$(CC) -c $< $(CFLAGS)
 
 clean:
-	-rm $(OBJS) mygl1
+	-rm $(OBJS) mygl2
