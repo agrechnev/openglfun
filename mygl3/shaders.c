@@ -14,11 +14,7 @@
 #include "initwin.h"
 
 /* Create shaders and the shader program */
-GLuint createShaderProgram(const GLchar* fragmentShaderSource){
-    //Vertex shader source as a string literal
-    const GLchar* vertexShaderSource="#version 330 core\n"
-   "layout (location=0) in vec3 pos;\n"
-   "void main(){gl_Position=vec4(pos.x, pos.y, pos.z, 1.0);}\n\0";
+GLuint createShaderProgram(const GLchar* vertexShaderSource,  const GLchar* fragmentShaderSource){
     
     // Build the shader program
     // Vertex shader

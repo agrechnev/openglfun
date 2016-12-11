@@ -3,6 +3,6 @@
 #define SHADERS_H_
  
 /* Create shaders and the shader program */
-GLuint createShaderProgram(const GLchar* fragmentShaderSource);
+GLuint createShaderProgram(const GLchar* vertexShaderSource,  const GLchar* fragmentShaderSource);
 
 #endif
