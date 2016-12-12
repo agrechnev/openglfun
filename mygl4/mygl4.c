@@ -18,6 +18,8 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
+// SOIL
+#include <SOIL.h>
 
 // Local includes
 #include "initwin.h"
@@ -77,7 +79,21 @@ int main(){
     GLuint VAO1, VBO1, EBO1;
     createVAO(&VAO1, &VBO1, &EBO1, vertices1, sizeof(vertices1), indices1, sizeof(indices1),1);    
 
-
+    //-----
+    // Create textures
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glBindTexture(GL_TEXTURE_2D, texture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
+    // Set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT (usually basic wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // Set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // Load image, create texture and generate mipmaps
+    int image_width, image_height;
+    unsigned char* image = SOIL_load_image("texture_files/wall.jpg", &image_width, &image_height, 0, SOIL_LOAD_RGB);
+    
     //----
     // Set Clear (background) color
     glClearColor(0.5f, 1.0f, 1.0f, 1.0f);
