@@ -6,11 +6,11 @@ LIBS= -lGLEW -lglfw  -lGL
 OBJS = mygl2.o initwin.o shaders.o vao.o
 DEPS=initwin.h shaders.h vao.h
 
-mygl2: $(OBJS)
+mygl_exec2: $(OBJS)
 	$(CC) -Wall  -o $@  $(OBJS) $(LIBS)
 
 .o:.c $(DEPS)
 	$(CC) -c $< $(CFLAGS)
 
 clean:
-	-rm $(OBJS) mygl2
+	-rm $(OBJS) mygl_exec2
