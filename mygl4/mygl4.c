@@ -1,3 +1,10 @@
+/** GL4 by Oleksiy Grechnyev 
+ *  Fun with textures
+ * 
+ *  This is based on the learnopengl.com tutorial
+ *  But write everything by hand, using C (and not C++) and more modular structure
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -5,13 +12,7 @@
 
 // GLEW
 #define GLEW_STATIC
-/** GL4 by Oleksiy Grechnyev 
- *  Fun with textures
- *  In progress, unfinished !!!
- * 
- *  This is based on the learnopengl.com tutorial
- *  But write everything by hand, using C (and not C++) and more modular structure
- */
+
 
 #include <GL/glew.h>
 
@@ -25,6 +26,7 @@
 #include "initwin.h"
 #include "shaders.h"
 #include "vao.h"
+#include "texture.h"
 
 //-------------------------------------------------------------------------------------------
 // GLOBAL DATA
@@ -65,11 +67,12 @@ int main(){
     // Vertex data, VBO, VAO
  
 
-    // Triangle 1: changes color
+    // Triangle 1: XYZ, RGB, ST data (ST = texture X, texture Y)
     GLfloat vertices1[] = {
-         -0.5f,  -0.5f, 0.0f,  
-          0.5f,  -0.5f, 0.0f,  
-          0.0f,   0.5f, 0.0f 
+        //      XYZ                       RGB                ST
+         -0.5f,  -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,      0.0f, 0.0f,
+          0.5f,  -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,      1.0f, 0.0f,
+          0.0f,   0.5f, 0.0f,     0.0f, 0.0f, 1.0f,      0.5f, 1.0f
     };
     // Indices
     GLuint indices1[]={
@@ -77,22 +80,11 @@ int main(){
     };
 
     GLuint VAO1, VBO1, EBO1;
-    createVAO(&VAO1, &VBO1, &EBO1, vertices1, sizeof(vertices1), indices1, sizeof(indices1),1);    
+    createVAO(&VAO1, &VBO1, &EBO1, vertices1, sizeof(vertices1), indices1, sizeof(indices1),3);    
 
     //-----
     // Create textures
-    GLuint texture;
-    glGenTextures(1, &texture);
-    glBindTexture(GL_TEXTURE_2D, texture); // All upcoming GL_TEXTURE_2D operations now have effect on this texture object
-    // Set the texture wrapping parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT (usually basic wrapping method)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    // Set texture filtering parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    // Load image, create texture and generate mipmaps
-    int image_width, image_height;
-    unsigned char* image = SOIL_load_image("texture_files/wall.jpg", &image_width, &image_height, 0, SOIL_LOAD_RGB);
+    GLuint texture = createTexture("texture_files/container.jpg");
     
     //----
     // Set Clear (background) color
@@ -115,7 +107,9 @@ int main(){
         // Draw the triangles
 
         // Triangle 1 
-        glUseProgram(shaderProgram1);        
+        
+        glBindTexture(GL_TEXTURE_2D, texture); // Texture
+        glUseProgram(shaderProgram1);        // Program
 
         glBindVertexArray(VAO1);    
         glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
@@ -129,9 +123,7 @@ int main(){
         glfwSwapBuffers(window);
     }
     // Free memory
-    glDeleteVertexArrays(1, &VAO1);
-    glDeleteBuffers(1, &VBO1);
-    glDeleteBuffers(1, &EBO1);
+    deleteVAO(&VAO1, &VBO1, &EBO1);
     
     // Finish the program
     glfwTerminate();

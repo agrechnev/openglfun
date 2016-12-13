@@ -3,8 +3,8 @@ CFLAGS=
 
 #LIBS= -lGLEW -lglfw  -lGL -lX11 -pthread -lXrandr -lXi -lm
 LIBS= -L. -lGLEW -lglfw  -lGL -lm -lSOIL
-OBJS = mygl4.o initwin.o shaders.o vao.o
-DEPS=initwin.h shaders.h vao.h
+OBJS = mygl4.o initwin.o shaders.o vao.o texture.o
+DEPS=initwin.h shaders.h vao.h texture.h
 
 mygl_exec4: $(OBJS)
 	$(CC) -Wall  -o $@  $(OBJS) $(LIBS)
