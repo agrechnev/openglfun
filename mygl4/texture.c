@@ -15,7 +15,7 @@
 #include <GLFW/glfw3.h>
 
 // SOIL
-#include <SOIL.h>
+#include <SOIL/SOIL.h>
 
 // Local includes
 #include "initwin.h"
