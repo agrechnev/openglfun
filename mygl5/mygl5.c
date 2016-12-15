@@ -1,5 +1,5 @@
-/** GL4 by Oleksiy Grechnyev 
- *  Fun with textures
+/** GL5 by Oleksiy Grechnyev 
+ *  More fun with textures: 2 textures, mixing
  * 
  *  This is based on the learnopengl.com tutorial
  *  But write everything by hand, using C (and not C++) and more modular structure
@@ -29,6 +29,7 @@
 //-------------------------------------------------------------------------------------------
 // GLOBAL DATA
 
+GLfloat mixingGlobal = 0.5f; // Mixing parameter
 
 //-------------------------------------------------------------------------------------------
 // Function prototypes
@@ -67,14 +68,16 @@ int main(){
 
     // Triangle 1: XYZ, RGB, ST data (ST = texture X, texture Y)
     GLfloat vertices1[] = {
-        //      XYZ                       RGB                ST
+        //        XYZ                    RGB                 ST
          -0.5f,  -0.5f, 0.0f,     1.0f, 0.0f, 0.0f,      0.0f, 0.0f,
-          0.5f,  -0.5f, 0.0f,     0.0f, 1.0f, 0.0f,      1.0f, 0.0f,
-          0.0f,   0.5f, 0.0f,     0.0f, 0.0f, 1.0f,      0.5f, 1.0f
+         -0.5f,   0.5f, 0.0f,     0.0f, 1.0f, 0.0f,      0.0f, 1.0f,
+          0.5f,   0.5f, 0.0f,     0.0f, 0.0f, 1.0f,      1.0f, 1.0f,
+          0.5f,  -0.5f, 0.0f,     1.0f, 1.0f, 0.0f,      1.0f, 0.0f
     };
     // Indices
     GLuint indices1[]={
-        0, 1, 2  // Triangle 
+        0, 1, 2,  // Triangle 1
+        2, 3, 0  // Triangle 2
     };
 
     GLuint VAO1, VBO1, EBO1;
@@ -82,8 +85,9 @@ int main(){
 
     //-----
     // Create textures
-    GLuint texture = createTexture("../texture_global/container.jpg");
-    
+    GLuint texture1 = createTexture("../texture_global/container.jpg");
+    GLuint texture2 = createTexture("../texture_global/awesomeface.png");    
+
     //----
     // Set Clear (background) color
     glClearColor(0.5f, 1.0f, 1.0f, 1.0f);
@@ -105,12 +109,28 @@ int main(){
         // Draw the triangles
 
         // Triangle 1 
-        
-        glBindTexture(GL_TEXTURE_2D, texture); // Texture
+
         glUseProgram(shaderProgram1);        // Program
+        
+        // Textures
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture1); 
+        glUniform1i(glGetUniformLocation(shaderProgram1, "ourTexture1"), 0);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, texture2); 
+        glUniform1i(glGetUniformLocation(shaderProgram1, "ourTexture2"), 1);
+        
+        GLfloat timeValue = glfwGetTime(); // Get time
+
+        // Time-based mixing
+        glUniform1f(glGetUniformLocation(shaderProgram1, "mixing"), (1+sin(timeValue))*0.5 );
+
+        // Keyboard-based mixing
+        // glUniform1f(glGetUniformLocation(shaderProgram1, "mixing"), mixingGlobal );
 
         glBindVertexArray(VAO1);    
-        glDrawElements(GL_TRIANGLES, 3, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         
         glBindVertexArray(0);
         
@@ -133,6 +153,19 @@ int main(){
 // Escape only, no funny stuff
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode){
         
+//    printf("%d\n", key);
+
+    // Up and down keys control the mixing
+    if (key==GLFW_KEY_UP && action==GLFW_PRESS) {
+      mixingGlobal+=0.1f;
+      if (mixingGlobal > 1.0f) mixingGlobal = 1.0f;
+    }
+    
+    if (key==GLFW_KEY_DOWN && action==GLFW_PRESS) {
+      mixingGlobal-=0.1f;
+      if (mixingGlobal < 0.0f) mixingGlobal = 0.0f;
+    }
+
     if (key==GLFW_KEY_ESCAPE && action==GLFW_PRESS)
         glfwSetWindowShouldClose(window, GL_TRUE);
     

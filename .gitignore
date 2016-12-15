@@ -1,3 +1,4 @@
 *.o
 *.a
 mygl_exec*
+cppgl_exec*

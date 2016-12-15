@@ -9,7 +9,7 @@ DEPS=initwin.h shaders.h vao.h
 mygl_exec3: $(OBJS)
 	$(CC) -Wall  -o $@  $(OBJS) $(LIBS)
 
-.o:.c $(DEPS)
+.c.o: $(DEPS)
 	$(CC) -c $< $(CFLAGS)
 
 clean:
