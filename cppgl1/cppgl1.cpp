@@ -21,28 +21,35 @@
 
 
 // Local includes
-#include "initwin.h"
+#include "initwin.hpp"
 #include "shaders.h"
-#include "vao.h"
+#include "vao.hpp"
 #include "texture.h"
+
+
 
 //-------------------------------------------------------------------------------------------
 // GLOBAL DATA
 
-GLfloat mixingGlobal = 0.5f; // Mixing parameter
+namespace mygl{
+ GLfloat mixingGlobal = 0.5f; // Mixing parameter
+
+ //-------------------------------------------------------------------------------------------
+ // Function prototypes
+
+ // Callbacks
+ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+
+ // Other
+ float randf();
+}
 
 //-------------------------------------------------------------------------------------------
-// Function prototypes
-
-// Callbacks
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
-
-
-// Other
-float randf();
-
+// MAIN
 //-------------------------------------------------------------------------------------------
 int main(){
+    using namespace mygl;
+    
     printf("Goblins WON !!!\n");
     
     // Seed random number generator
@@ -80,8 +87,8 @@ int main(){
         2, 3, 0  // Triangle 2
     };
 
-    GLuint VAO1, VBO1, EBO1;
-    createVAO(&VAO1, &VBO1, &EBO1, vertices1, sizeof(vertices1), indices1, sizeof(indices1),3);    
+    // Create Vao Unit (a C++ class, beautiful !!!)
+    VaoUnit *vaoUnit1=new VaoUnit(vertices1, sizeof(vertices1), indices1, sizeof(indices1), XYZ_RGB_ST);
 
     //-----
     // Create textures
@@ -129,7 +136,7 @@ int main(){
         // Keyboard-based mixing
         // glUniform1f(glGetUniformLocation(shaderProgram1, "mixing"), mixingGlobal );
 
-        glBindVertexArray(VAO1);    
+        vaoUnit1->bind();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         
         glBindVertexArray(0);
@@ -141,19 +148,21 @@ int main(){
         glfwSwapBuffers(window);
     }
     // Free memory
-    deleteVAO(&VAO1, &VBO1, &EBO1);
+    delete vaoUnit1;
     
     // Finish the program
     glfwTerminate();
     return 0;
 } 
-//-------------------------------------------------------------------------
-//Callback functions
 
-// Escape only, no funny stuff
-void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode){
+namespace mygl{
+ //-------------------------------------------------------------------------
+ //Callback functions
+
+ // Escape only, no funny stuff
+ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode){
         
-//    printf("%d\n", key);
+ //    printf("%d\n", key);
 
     // Up and down keys control the mixing
     if (key==GLFW_KEY_UP && action==GLFW_PRESS) {
@@ -167,16 +176,14 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 
     if (key==GLFW_KEY_ESCAPE && action==GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GL_TRUE);
-    
-}
+        glfwSetWindowShouldClose(window, GL_TRUE);    
+ }
 
 
-
-// Other functions
-// Type float random number between 0.0f and 0.1f
-float randf(){
+ // Other functions
+ // Type float random number between 0.0f and 0.1f
+ float randf(){
     return (float)rand()/(float)RAND_MAX;
-}
-
-
+ }
+ 
+} // namespace mygl

@@ -1,4 +1,8 @@
-/* Create VAO, this includes creating vertices, VBO, EBO */
+/** By Oleksiy Grechnyev
+ *  class VaoUnit
+ *  This class includes VAO, VBO and (optionally EBO)
+ *  It creates all respective buffers and such
+ */
 
 // GLEW
 #define GLEW_STATIC
@@ -7,47 +11,57 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
-#include "initwin.h"
+#include "initwin.hpp"
 
-#include "vao.h"
+#include "vao.hpp"
 
-/* Create VAO, this includes creating vertices, VBO, EBO 
-    pVAO, pVBO, pEBO = pointers to VAO, VBO, EBO
-    vertices[], indices[]  = data arrays
-     ver_size = sizeof(vertices)
-     ind_size = sizeof(indices)
-     ver_type = type of vertex data, e.g. VAO_XYZRBST
-*/
-void createVAO(GLuint *pVAO, GLuint *pVBO, GLuint *pEBO, GLfloat* vertices, size_t  ver_size, GLuint* indices, size_t ind_size, int ver_type){
+namespace mygl{
     
-    // VBO, VAO
+      /** Constructor: create a new VaoUnit
+      *  vertices[], indices[]  = data arrays
+      * verSize = sizeof(vertices)
+      * indSize = sizeof(indices)
+      * vertexType = type of vertex data
+      * 
+      * Note: if indices == nullptr, then EBO is ignored
+      */
+  VaoUnit::VaoUnit(GLfloat* vertices, size_t  verSize, GLuint* indices, size_t indSize, VertexType vertexType){
+    // Set up parameters
+    if (indices==nullptr)  {
+        useEbo=false;
+    } else {
+        useEbo=true;
+    }
+    vertexDataType = vertexType;
+      
+    // Create VBO, VAO
     
-    glGenVertexArrays(1, pVAO);
-    glGenBuffers(1, pVBO);
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
     
     // Bind VAO
-    glBindVertexArray(*pVAO);
+    glBindVertexArray(VAO);
     
     // Bind VBO
-    glBindBuffer(GL_ARRAY_BUFFER, *pVBO);
-    glBufferData(GL_ARRAY_BUFFER, ver_size, vertices, GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, verSize, vertices, GL_STATIC_DRAW);
     
-    // Create and bind EBO, ignore if pEBO==null
-   if (pEBO!=NULL){
-     glGenBuffers(1, pEBO);
-     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, *pEBO);
-     glBufferData(GL_ELEMENT_ARRAY_BUFFER, ind_size, indices, GL_STATIC_DRAW);
+    // Create and bind EBO if needed
+   if (useEbo){
+     glGenBuffers(1, &EBO);
+     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indSize, indices, GL_STATIC_DRAW);
    }
     
     // Set up the arrays
-    switch (ver_type){
-      case VAO_XYZ:  // xyz 
+    switch (vertexDataType){
+      case XYZ:  // xyz 
          // xyz array (0)
          glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*sizeof(GLfloat), (GLvoid *)0);
          glEnableVertexAttribArray(0);
          break;
 
-      case VAO_XYZRGB:  // xyzrgb
+      case XYZ_RGB:  // xyzrgb
          // xyz array (0)
          glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), (GLvoid *)0);
          glEnableVertexAttribArray(0);
@@ -58,7 +72,7 @@ void createVAO(GLuint *pVAO, GLuint *pVBO, GLuint *pEBO, GLfloat* vertices, size
 
          break;
 
-      case VAO_XYZRGBST:  // xyzrgbrs
+      case XYZ_RGB_ST:  // xyzrgbrs
          // xyz array (0)
          glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8*sizeof(GLfloat), (GLvoid *)0);
          glEnableVertexAttribArray(0);
@@ -74,18 +88,23 @@ void createVAO(GLuint *pVAO, GLuint *pVBO, GLuint *pEBO, GLfloat* vertices, size
          break;
          
       default:
-        fatalError("createVAO: wrong ver_type !");
+        fatalError("VaoUnit::VaoUnit wrong vertexType !");
    }
     
     // Unbind VBO+VAO, but not EBO !!!
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
-}
+ }
 
-/* Delete VAO, VBO and EBO 
-   EBO is skipped if pEBO==NULL */
-void deleteVAO(GLuint *pVAO, GLuint *pVBO, GLuint *pEBO){
-    glDeleteVertexArrays(1, pVAO);
-    glDeleteBuffers(1, pVBO);
-    if (pEBO!=NULL) glDeleteBuffers(1, pEBO);   
+/* Destructor */
+ VaoUnit:: ~VaoUnit(){
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    if (useEbo) glDeleteBuffers(1, &EBO);   
+ }
+
+  /* Bind this VAO object */
+  void VaoUnit::bind(){
+       glBindVertexArray(VAO);
+  }
 }

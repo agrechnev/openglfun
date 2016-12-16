@@ -18,11 +18,13 @@
 #include <SOIL/SOIL.h>
 
 // Local includes
-#include "initwin.h"
+#include "initwin.hpp"
 
 
 /* Create a texture object from an image file */
 GLuint createTexture(char *fileName){
+    using namespace mygl;
+    
     // Create and bind texture objects
     GLuint texture;
     glGenTextures(1, &texture);

@@ -12,7 +12,7 @@
 
 
 // Local includes, needed for fataLError2()
-#include "initwin.h"
+#include "initwin.hpp"
 
 /* Read a file as a single allocated string, returns NULL if error */
 char *readFile(char * fileName){
@@ -44,6 +44,8 @@ char *readFile(char * fileName){
 
 /* Create shaders and the shader program from external files*/
 GLuint createShaderProgram(char* vertexShaderFile,  char* fragmentShaderFile){
+    
+    using namespace mygl;
     
     // Read files
     char *vertexShaderSource=readFile(vertexShaderFile);
