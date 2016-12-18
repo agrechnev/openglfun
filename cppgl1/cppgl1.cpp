@@ -5,10 +5,10 @@
  *  But write everything by hand, using C (and not C++) and more modular structure
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <time.h>
-#include "math.h"
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
+#include <iostream>
 
 // GLEW
 #define GLEW_STATIC
@@ -22,9 +22,9 @@
 
 // Local includes
 #include "initwin.hpp"
-#include "shaders.h"
+#include "shaders.hpp"
 #include "vao.hpp"
-#include "texture.h"
+#include "texture.hpp"
 
 
 
@@ -49,8 +49,9 @@ namespace mygl{
 //-------------------------------------------------------------------------------------------
 int main(){
     using namespace mygl;
-    
-    printf("Goblins WON !!!\n");
+    using namespace std;
+
+    cout << "Goblins WON !!!" << endl;
     
     // Seed random number generator
     srand(time(NULL));
@@ -66,8 +67,8 @@ int main(){
     // Create shaders and the shader program
 
     // Triangle 1: changes color
-    GLuint shaderProgram1 =  createShaderProgram("shader_files/s1.vs", "shader_files/s1.frag");
-    GLuint vertexColorLocation1 = glGetUniformLocation(shaderProgram1, "vertexColor");
+    ShaderProg shaderProgram1("shader_files/s1.vs", "shader_files/s1.frag");
+    GLuint vertexColorLocation1 = glGetUniformLocation(shaderProgram1.getProgram(), "vertexColor");
 
     //----
     // Vertex data, VBO, VAO
@@ -117,24 +118,24 @@ int main(){
 
         // Triangle 1 
 
-        glUseProgram(shaderProgram1);        // Program
+        shaderProgram1.use();        // Use the Program
         
         // Textures
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture1); 
-        glUniform1i(glGetUniformLocation(shaderProgram1, "ourTexture1"), 0);
+        glUniform1i(glGetUniformLocation(shaderProgram1.getProgram(), "ourTexture1"), 0);
 
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2); 
-        glUniform1i(glGetUniformLocation(shaderProgram1, "ourTexture2"), 1);
+        glUniform1i(glGetUniformLocation(shaderProgram1.getProgram(), "ourTexture2"), 1);
         
         GLfloat timeValue = glfwGetTime(); // Get time
 
         // Time-based mixing
-        glUniform1f(glGetUniformLocation(shaderProgram1, "mixing"), (1+sin(timeValue))*0.5 );
+        glUniform1f(glGetUniformLocation(shaderProgram1.getProgram(), "mixing"), (1+sin(timeValue))*0.5 );
 
         // Keyboard-based mixing
-        // glUniform1f(glGetUniformLocation(shaderProgram1, "mixing"), mixingGlobal );
+        // glUniform1f(glGetUniformLocation(shaderProgram1.getProgram(), "mixing"), mixingGlobal );
 
         vaoUnit1->bind();
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -162,7 +163,6 @@ namespace mygl{
  // Escape only, no funny stuff
  void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode){
         
- //    printf("%d\n", key);
 
     // Up and down keys control the mixing
     if (key==GLFW_KEY_UP && action==GLFW_PRESS) {

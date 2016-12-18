@@ -1,7 +1,13 @@
-/* Create shaders and shader program */
+/**
+ * By Oleksiy Grechnyev
+ *
+ * Class ShaderProg :
+ * Create shaders and the shader program from external files
+ */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <string>
+#include <fstream>
+#include <sstream>
 
 // GLEW
 #define GLEW_STATIC
@@ -14,50 +20,49 @@
 // Local includes, needed for fataLError2()
 #include "initwin.hpp"
 
-/* Read a file as a single allocated string, returns NULL if error */
-char *readFile(char * fileName){
-    char *buffer; // The bufer to create
-    size_t fileSize; // File size
-    
-    FILE* file= fopen(fileName, "r"); // Open file
-    if (file==NULL) return NULL;
-    
-    // Determine size
-    if (fseek(file, 0, SEEK_END)) return NULL;
-    fileSize = ftell(file);
-    if (fileSize <=0) return NULL;
-    rewind(file);
-    
-    // Allocate memory and read
-    buffer = (char *)malloc(fileSize+1);
-    if (buffer==NULL) return NULL;
-    
-    // Read data to buffer
-    fread (buffer, 1, fileSize, file);
-    
-    buffer[fileSize]='\0'; // End of C string
-    
-    fclose(file);
-    
-    return buffer;
-}
+// The class
+#include "shaders.hpp"
 
-/* Create shaders and the shader program from external files*/
-GLuint createShaderProgram(char* vertexShaderFile,  char* fragmentShaderFile){
+namespace mygl{
+ // Read a file as a string, fatalError if exception
+ std::string ShaderProg::readFile(const char * fileName){
+   using namespace std;
     
-    using namespace mygl;
+   ifstream file;
+   // Set up exceptions
+   file.exceptions(ifstream::badbit);
     
-    // Read files
-    char *vertexShaderSource=readFile(vertexShaderFile);
-    if (vertexShaderSource==NULL) fatalError2("ERROR::SHADER:: Canntot read file ", vertexShaderFile);
-    
-    char *fragmentShaderSource=readFile(fragmentShaderFile);
-    if (fragmentShaderSource==NULL) fatalError2("ERROR::SHADER:: Canntot read file ", fragmentShaderFile);
-    
+   // Open and read file within the try block
+   try{
+     file.open(fileName);  // Open file
+     stringstream fileStream; // The file as a stream
+
+     // Read file into fileStream
+     fileStream << file.rdbuf();
+
+     file.close(); // Close file
+
+     return fileStream.str();
+
+   } catch (ifstream::failure e) {
+     fatalError2("Cannot read file ", fileName);
+   }
+ }
+
+ // Constructor
+ ShaderProg::ShaderProg(const char *vertexPath, const char *shaderPath) {
+   using namespace std;
+   
+   // Read the files as strings 
+   string vertexShaderStr = readFile(vertexPath);
+   string fragmentShaderStr = readFile(shaderPath);
+   const char * vertexShaderSource = vertexShaderStr.c_str();
+   const char * fragmentShaderSource = fragmentShaderStr.c_str();
+
     // Build the shader program
     // Vertex shader
     GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, (const GLchar  * const *)&vertexShaderSource, NULL);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
     // Check for errors
     GLint success;
@@ -70,7 +75,7 @@ GLuint createShaderProgram(char* vertexShaderFile,  char* fragmentShaderFile){
     
     // Fragment shader
     GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, (const GLchar  * const *)&fragmentShaderSource, NULL);
+    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
     // Check for errors
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
@@ -80,20 +85,33 @@ GLuint createShaderProgram(char* vertexShaderFile,  char* fragmentShaderFile){
     }
     
     // Shader program
-    GLuint shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader);
-    glAttachShader(shaderProgram, fragmentShader);
-    glLinkProgram(shaderProgram);
+    program = glCreateProgram();
+    glAttachShader(program, vertexShader);
+    glAttachShader(program, fragmentShader);
+    glLinkProgram(program);
     // Check for errors
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+    glGetProgramiv(program, GL_LINK_STATUS, &success);
     if (!success){
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+        glGetProgramInfoLog(program, 512, NULL, infoLog);
         fatalError2("ERROR::SHADER::PROGRAM::LINKING_FAILED\n", infoLog);
     }
     
     // Delete shaders: we don't need them anymore
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-    
-    return shaderProgram;
+ }
+
+ // Use program
+ void ShaderProg::use(){
+   glUseProgram(program);
+ }
+
+ // Getter
+ GLuint ShaderProg::getProgram() {
+    return program;
+ }
+
 }
+
+
+

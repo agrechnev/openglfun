@@ -3,7 +3,7 @@
  * By Oleksiy Grechnyev
  */
 
-#include <stdlib.h>
+#include <cstdlib>
 
 // GLEW
 #define GLEW_STATIC
@@ -21,9 +21,10 @@
 #include "initwin.hpp"
 
 
+namespace mygl{
+
 /* Create a texture object from an image file */
 GLuint createTexture(char *fileName){
-    using namespace mygl;
     
     // Create and bind texture objects
     GLuint texture;
@@ -53,4 +54,6 @@ GLuint createTexture(char *fileName){
     glBindTexture(GL_TEXTURE_2D, 0);
     
     return texture;
+}
+
 }
