@@ -1,5 +1,7 @@
-/** CPPGL1 by Oleksiy Grechnyev 
- *  This is just like mygl5, but in C++ using a few classes
+/** CPPGL2 by Oleksiy Grechnyev 
+ *
+ *  Fun with rotation + GLM matrices
+ *  Uses 2 transformation (and 2 mixings) to 1 sets of data, FUN !
  * 
  *  This is loosely based on the learnopengl.com tutorial
  */
@@ -18,6 +20,10 @@
 // GLFW
 #include <GLFW/glfw3.h>
 
+// GLM
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Local includes
 #include "initwin.hpp"
@@ -130,17 +136,32 @@ int main(){
         
         GLfloat timeValue = glfwGetTime(); // Get time
 
-        // Time-based mixing
-        glUniform1f(shaderProgram1.loc("mixing"), (1+sin(timeValue))*0.5 );
 
-        // Keyboard-based mixing
-        // glUniform1f(shaderProgram1.loc("mixing"), mixingGlobal );
+        // Set up the transformation with GML (+mixing)
+        float scl=(3+sin(timeValue*sqrt(2.0)))/8.0; // The scale from 0.25 to 0.5
+        float angle=timeValue*sqrt(3.0); // Angle in radians for rotation
+        
+        float mixing1=(1+sin(timeValue))*0.5f;
+        float mixing2=(1+sin(timeValue*sqrt(1.5)))*0.5f;
 
-        vaoUnit1->bind();
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glm::mat4 trans1; // trans1 is changing size      
+        trans1 = glm::translate(trans1,  glm::vec3(0.5f, -0.5f, 0.0f));  
+        trans1 = glm::scale(trans1, glm::vec3(scl, scl, scl));
+ 
+        glm::mat4 trans2; // trans2 is spinning
+        trans2 = glm::rotate(trans2, angle, glm::vec3(0.0f, 0.0f, 1.0f)); 
+        trans2 = glm::translate(trans2,  glm::vec3(-0.5f, +0.5f, 0.0f));  
+        trans2 = glm::scale(trans2, glm::vec3(0.5f, 0.5f, 0.5f));
+
+        // Use 2 transformations to draw 2 objects from one set of data
+        glUniformMatrix4fv(shaderProgram1.loc("transform"), 1, GL_FALSE, glm::value_ptr(trans1));
+        glUniform1f(shaderProgram1.loc("mixing"), mixing1);
+        vaoUnit1->draw(6);
         
-        glBindVertexArray(0);
-        
+        glUniformMatrix4fv(shaderProgram1.loc("transform"), 1, GL_FALSE, glm::value_ptr(trans2));
+        glUniform1f(shaderProgram1.loc("mixing"), mixing2);
+        vaoUnit1->draw(6);
+
         // Swap the buffers
         // This actually paints things in your window
         // If nothing else is implemented,
