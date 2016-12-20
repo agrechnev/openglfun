@@ -1,6 +1,6 @@
-/** CPPGL3 by Oleksiy Grechnyev 
+/** CPPGL4 by Oleksiy Grechnyev 
  *
- *  Starting 3D with all the funny matrices
+ *  3D and funny matrices: may cubes this time
  * 
  *  This is loosely based on the learnopengl.com tutorial
  */
@@ -45,7 +45,11 @@ namespace mygl{
  void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 
  // Other
+ // float random number between 0 and 1
  float randf();
+ 
+ // Random unit 3-vector
+ glm::vec3 randUV3();
 }
 
 //-------------------------------------------------------------------------------------------
@@ -77,10 +81,24 @@ int main(){
 
     // Load shaders
     ShaderProg shaderProgram1("shader_files/s1.vs", "shader_files/s1.frag");
+    
+    // Positions of 10 cubes
+   glm::vec3 cubePositions[] = {
+        glm::vec3( 0.0f,  0.0f,  0.0f), 
+        glm::vec3( 2.0f,  5.0f, -15.0f), 
+        glm::vec3(-1.5f, -2.2f, -2.5f),  
+        glm::vec3(-3.8f, -2.0f, -12.3f),  
+        glm::vec3( 2.4f, -0.4f, -3.5f),  
+        glm::vec3(-1.7f,  3.0f, -7.5f),  
+        glm::vec3( 1.3f, -2.0f, -2.5f),  
+        glm::vec3( 1.5f,  2.0f, -2.5f), 
+        glm::vec3( 1.5f,  0.2f, -1.5f), 
+        glm::vec3(-1.3f,  1.0f, -1.5f)  
+   };
 
+    
     //----
     // Vertex data, VBO, VAO
- 
 
     // Model 1: XYZ, ST data (ST = texture X, texture Y)
     GLfloat vertices1[] = {
@@ -142,6 +160,16 @@ int main(){
     GLuint texture1 = createTexture("../texture_global/container.jpg");
     GLuint texture2 = createTexture("../texture_global/awesomeface.png");    
 
+    //--------
+    // Cube rotation axes and velocities: randomize them !
+    glm::vec3 cubeAxes[10];
+    float cubeAV[10]; // Angular velocities
+    // Loop over 10 cubes
+    for (int cube=0; cube<10; cube++) {
+        cubeAV[cube] = 4*randf()-2; // Between -2 and 2 RADIAN / time unit
+        cubeAxes[cube] = randUV3(); // Random unit vector
+    }
+    
     //----
     // Set Clear (background) color
     glClearColor(0.5f, 1.0f, 1.0f, 1.0f);
@@ -174,27 +202,30 @@ int main(){
         glUniform1i(shaderProgram1.loc("ourTexture2"), 1);
         
         GLfloat timeValue = glfwGetTime(); // Get time
-
-
-        // Set up the transformations 
-        // Model
-        glm::mat4 model;
-        model = glm::rotate(model, -timeValue*glm::radians(55.0f), glm::vec3(0.5f, 1.0f, 0.0f));
+        
+        // Set up view and projection: same for all cubes
         // View
         glm::mat4 view;
         view = glm::translate(view, glm::vec3(0.0f, 0.0f, -(parGlobal1*5 + 1.0f)) );
+        glUniformMatrix4fv(shaderProgram1.loc("view"), 1, GL_FALSE, glm::value_ptr(view));
         // Projection
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(45.0f), (GLfloat)SCREEN_WIDTH/(GLfloat)SCREEN_HEIGHT, 0.1f, 100.0f);;
-        
-
-        // Pass the transformations as uniforms
-        glUniformMatrix4fv(shaderProgram1.loc("model"), 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(shaderProgram1.loc("view"), 1, GL_FALSE, glm::value_ptr(view));
+        projection = glm::perspective(glm::radians(45.0f), (GLfloat)SCREEN_WIDTH/(GLfloat)SCREEN_HEIGHT, 0.1f, 100.0f);
         glUniformMatrix4fv(shaderProgram1.loc("projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
-        // The actual draw
-        vaoUnit1->draw(36);
+        // Loop over 10 cubes
+        for (int cube=0; cube<10; cube++) {
+
+            // Set up the transformations  
+            // Model
+            glm::mat4 model;
+            model = glm::translate(model, cubePositions[cube]);
+            model = glm::rotate(model, timeValue*cubeAV[cube], cubeAxes[cube]);
+            glUniformMatrix4fv(shaderProgram1.loc("model"), 1, GL_FALSE, glm::value_ptr(model));
+
+            // The actual draw
+            vaoUnit1->draw(36);
+        }
         
 
         // Swap the buffers
@@ -233,9 +264,17 @@ namespace mygl{
 
 
  // Other functions
- // Type float random number between 0.0f and 0.1f
+ //float random number between 0.0f and 0.1f
  float randf(){
     return (float)rand()/(float)RAND_MAX;
+ }
+ 
+ // Random unit 3-vector with spherical distribution
+ glm::vec3 randUV3(){
+     float t = acos(2*randf()-1);
+     float p=M_PI*2*randf();
+     glm::vec3 result(sin(t)*cos(p), sin(t)*sin(p), cos(t));
+     return result;
  }
  
 } // namespace mygl
