@@ -39,20 +39,33 @@ namespace mygl{
     
  // Global data   
  
- // Keyboard
- bool keys[1024]; // True = key pressed
+ // Keyboard vars
+ bool keys[1024]; // true = key pressed
+
+ // Mouse vars
+ GLfloat yaw=-90.0f; // yaw and pitch angles in degrees
+ GLfloat pitch=0.0f;
+ GLfloat lastX, lastY; // Last mouse position
+ bool firstMouse=true; // true on the 1st iteration only
  
  // Camera parameters
  glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
  glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
  glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
+
+ // delta Time
+ GLfloat deltaTime=0.0f;
  //-------------------------------------------------------------------------------------------
  // Function prototypes
 
  // Callbacks
- void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
+ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
+ void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 
  // Other
+ // Calculate camera front from yaw & pitch
+ void calcFront();
+
  // Do the actual movement
  void doMovement();
  
@@ -76,16 +89,19 @@ int main(){
     srand(time(NULL));
     
     // Initialzie GLFW+GLEW, create window and viewport
-    const GLuint SCREEN_WIDTH = 1000;
-    const GLuint SCREEN_HEIGHT = 700;
+    const GLuint SCREEN_WIDTH = 1200;
+    const GLuint SCREEN_HEIGHT = 800;
     GLFWwindow* window = initWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Goblin OpenGL");
         
     // Set the callback functions    
     // Keyboard
-    glfwSetKeyCallback(window, key_callback);
+    glfwSetKeyCallback(window, keyCallback);
+    // Mouse
+    glfwSetCursorPosCallback(window, mouseCallback);
 
     // Options
-    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_DEPTH_TEST); // Needed for proper 3D
+//    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); // Disable mouse cursor
     
     //----
     // Create shaders and the shader program
@@ -188,9 +204,15 @@ int main(){
     
     // Uncomment this for wireframe mode
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
     
+     GLfloat lastFrame=0.0f; // Last frame for calculating deltaTime
     // The game loop
     while (!glfwWindowShouldClose(window)){
+        GLfloat timeValue = glfwGetTime(); // Get time
+        deltaTime = timeValue - lastFrame;
+        lastFrame = timeValue;
+
         // Event handlers
         // This is where callback functions are called
         // Also allows to close the window normally without kill
@@ -214,7 +236,7 @@ int main(){
         glBindTexture(GL_TEXTURE_2D, texture2); 
         glUniform1i(shaderProgram1.loc("ourTexture2"), 1);
         
-        GLfloat timeValue = glfwGetTime(); // Get time
+
         
         // Set up view and projection (CAMERA): same for all cubes
         // View 
@@ -257,12 +279,10 @@ namespace mygl{
  //-------------------------------------------------------------------------
  //Callback functions
 
- // Escape only, no funny stuff
- void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode){
-        
-    
+ // Keyboard callback
+ // Escape + press/release for all keys
+ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode){            
 
-    // Up and down keys control something (if needed) between 0 and 1
     if (action==GLFW_PRESS) {
       keys[key]=true;
     } else if (action==GLFW_RELEASE) {
@@ -275,11 +295,67 @@ namespace mygl{
         glfwSetWindowShouldClose(window, GL_TRUE);    
  }
  
+
+ // Mouse callback
+ void mouseCallback(GLFWwindow* window, double xpos, double ypos){
+  if (firstMouse) {
+   lastX = xpos;
+   lastY = ypos;
+   firstMouse=false;
+   return;
+  }
+
+
+  // Calculate offsets
+  GLfloat xoffset = xpos-lastX;
+  GLfloat yoffset = lastY - ypos;
+  // Store positions as last
+  lastX = xpos;
+  lastY = ypos;
+
+  // Scale offsets with mouse sensitivity
+  GLfloat sensitivity = 0.05f;
+  xoffset *= sensitivity;
+  yoffset *= sensitivity;
+
+  // Update pitch & yaw
+  pitch += yoffset;
+  yaw += xoffset;
+ 
+
+  // Make sure pitch doesn't go beyound +- 90 deg
+  if (pitch > 89.0f) pitch = 89.0f;
+  if (pitch < -89.0f) pitch = -89.0f;
+
+  // Make yaw within 0 and 360 deg
+  yaw = glm::mod(yaw, 360.0f);
+
+  calcFront();
+
+ }
+
+ //--------------------------
+ // Other functions
+
+ // Calculate camera front from yaw & pitch
+ void calcFront(){
+
+  // Update cameraFront vector (camera direction)
+  glm::vec3 front;
+  front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+  front.y = sin(glm::radians(pitch));
+  front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+
+  // And normalize it
+  cameraFront = glm::normalize(front);
+ }
+
  // Do the actual movement
  void doMovement(){
-     // WASD = move camera 
-    GLfloat cameraSpeed=0.1f;
-    
+    // Camera speed depends on deltaTime
+    GLfloat cameraSpeed=5.0f*deltaTime;
+
+    // WASD = move camera     
     if (keys[ GLFW_KEY_W])
         cameraPos += cameraSpeed * cameraFront;
     if (keys[GLFW_KEY_S])
@@ -290,7 +366,7 @@ namespace mygl{
         cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
  }
 
- // Other functions
+
  //float random number between 0.0f and 0.1f
  float randf(){
     return (float)rand()/(float)RAND_MAX;

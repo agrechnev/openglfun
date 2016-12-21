@@ -65,6 +65,7 @@ namespace mygl{
         
         // Initialize GLEW
         glewExperimental = GL_TRUE;
+
         if  (glewInit() != GLEW_OK)  fatalError("Failed to initialize GLEW !");
         
         // Set viewport
