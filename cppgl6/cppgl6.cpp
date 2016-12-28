@@ -1,6 +1,6 @@
-/** CPPGL5 by Oleksiy Grechnyev 
+/** CPPGL6 by Oleksiy Grechnyev 
  *
- *  Fun with camera & keyboard controls, also zoom with mouse wheel
+ * Same as 5, but using camera class from the tutorial
  * 
  *  This is loosely based on the learnopengl.com tutorial
  */
@@ -30,6 +30,8 @@
 #include "vao.hpp"
 #include "texture.hpp"
 
+#include "camera.h"
+
 
 
 //-------------------------------------------------------------------------------------------
@@ -43,20 +45,10 @@ namespace mygl{
  bool keys[1024]; // true = key pressed
 
  // Camera
+ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f)); // Global var using defaults
  // Mouse vars
- GLfloat yaw=-90.0f; // yaw and pitch angles in degrees
- GLfloat pitch=0.0f;
  GLfloat lastX, lastY; // Last mouse position
  bool firstMouse=true; // true on the 1st iteration only
- 
- GLfloat fov=45.0f; // Field of view in degrees
- 
- // Camera parameters
- glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
- glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
- glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
- 
- 
 
  // delta Time
  GLfloat deltaTime=0.0f;
@@ -248,12 +240,12 @@ int main(){
         // Set up view and projection (CAMERA): same for all cubes
         // View 
         glm::mat4 view;
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+        view = camera.GetViewMatrix();
         glUniformMatrix4fv(shaderProgram1.loc("view"), 1, GL_FALSE, glm::value_ptr(view));
         
         // Projection
         glm::mat4 projection;
-        projection = glm::perspective(glm::radians(fov), (GLfloat)SCREEN_WIDTH/(GLfloat)SCREEN_HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), (GLfloat)SCREEN_WIDTH/(GLfloat)SCREEN_HEIGHT, 0.1f, 100.0f);
         glUniformMatrix4fv(shaderProgram1.loc("projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
         // Loop over 10 cubes
@@ -325,61 +317,29 @@ namespace mygl{
   xoffset *= sensitivity;
   yoffset *= sensitivity;
 
-  // Update pitch & yaw
-  pitch += yoffset;
-  yaw += xoffset;
- 
-
-  // Make sure pitch doesn't go beyound +- 90 deg
-  if (pitch > 89.0f) pitch = 89.0f;
-  if (pitch < -89.0f) pitch = -89.0f;
-
-  // Make yaw within 0 and 360 deg
-  yaw = glm::mod(yaw, 360.0f);
-
-  calcFront();
-
+  // Update camera
+  camera.ProcessMouseMovement(xoffset, yoffset);
  }
  
  // Mouse wheel (scroll) callback: update fov
  void scrollCallback(GLFWwindow* window, double xoffset, double yoffset){
-     const GLfloat sensitivity = 1.0f;
-     
-     fov -= yoffset*sensitivity;
-     if (fov<1.0f) fov=1.0f;
-     else if (fov>80.0f) fov=80.0f;
+     camera.ProcessMouseScroll(yoffset);
 }
 
  //--------------------------
  // Other functions
 
- // Calculate camera front from yaw & pitch
- void calcFront(){
-
-  // Update cameraFront vector (camera direction)
-  glm::vec3 front;
-  front.x = cos(glm::radians(pitch)) * cos(glm::radians(yaw));
-  front.y = sin(glm::radians(pitch));
-  front.z = cos(glm::radians(pitch)) * sin(glm::radians(yaw));
-
-  // And normalize it
-  cameraFront = glm::normalize(front);
- }
-
  // Do the actual movement
  void doMovement(){
-    // Camera speed depends on deltaTime
-    GLfloat cameraSpeed=5.0f*deltaTime;
-
     // WASD = move camera     
     if (keys[ GLFW_KEY_W])
-        cameraPos += cameraSpeed * cameraFront;
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     if (keys[GLFW_KEY_S])
-        cameraPos -= cameraSpeed * cameraFront;
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     if (keys[GLFW_KEY_A])
-        cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(LEFT, deltaTime);
     if (keys[GLFW_KEY_D])
-        cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(RIGHT, deltaTime);;
  }
 
 
